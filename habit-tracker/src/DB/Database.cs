@@ -1,102 +1,65 @@
-
-
-using System.Data;
 using Microsoft.Data.Sqlite;
 
-namespace habit_tracker.src.DB
+
+namespace habit_tracker.src.DB;
+
+public abstract class Database
 {
-    public class Database
+    private readonly string _connectionString; 
+    protected Database(string dbFilename)
     {
-        private readonly string _connectionString; 
-        public Database(string dbFilename)
-        {
-            _connectionString = $"Data Source=../../{dbFilename}";
-            CreateTables();
-            GetAllHabitEntries();
-        }
-
-        public void CreateTables()
-        {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = @"CREATE TABLE IF NOT EXISTS Habit (
-                    habitid INTEGER PRIMARY KEY AUTOINCREMENT,
-                    habitname TEXT
-                    )";
-                    command.ExecuteNonQuery();
-                    
-                    command.CommandText = @"CREATE TABLE IF NOT EXISTS HabitLog (
-                    habitlogid INTEGER PRIMARY KEY AUTOINCREMENT,
-                    habitid INTEGER,
-                    date TEXT,
-                    quantity INTEGER,
-                    FOREIGN KEY(habitid) REFERENCES habit(habitid)
-                    )";
-
-                    command.ExecuteNonQuery();
-                }
-                connection.Close();
-            }
-        }
-        
-
-        public void InsertHabit(string habitName)
-        {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = @"INSERT INTO Habit (habitname) VALUES ($habitName)";
-                    command.Parameters.Add(new SqliteParameter("$habitName", habitName));
-                    command.ExecuteNonQuery();
-                }
-                connection.Close();
-            }
-        }
-
-        public List<HabitEntry> GetAllHabitEntries()
-        {
-            List<HabitEntry> habitEntries = new();
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = @"SELECT habitid, habitname
-                                            FROM Habit;";
-                   
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.HasRows)
-                        {
-                            while (reader.Read())
-                            {
-                                habitEntries.Add(new HabitEntry
-                                {
-                                    HabitId = reader.GetInt32(reader.GetOrdinal("habitid")),
-                                    HabitName = reader.GetString(reader.GetOrdinal("habitname"))
-                                });
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("No rows found...");
-                        }
-                    }
-                }
-                connection.Close();
-            }
-            return habitEntries;
-        }
-
-        public List<HabitLogEntry> GetAllHabitLogEntries()
-        {
-            return new();
-        }
-
+        _connectionString = $"Data Source=../../{dbFilename}";
+        InitializeTable();
     }
+
+    protected abstract void InitializeTable();
+
+    protected List<T> ExecuteQuery<T>(string query, Func<SqliteDataReader, T> mapRow, Dictionary<string, object>? parameters = null)
+    {
+        var results = new List<T>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        using var command = new SqliteCommand(query, connection);
+        
+        AddParameters(command, parameters);
+
+        connection.Open();
+
+        using var reader = command.ExecuteReader();
+        
+        while (reader.Read())
+            results.Add(mapRow(reader));
+        
+        return results;
+    }
+
+    protected void ExecuteNonQuery(string query, Dictionary<string, object>? parameters = null)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        using var command = new SqliteCommand(query, connection);
+
+        AddParameters(command, parameters);
+
+        connection.Open();
+        command.ExecuteNonQuery();
+    }
+
+    protected bool RecordExists(string query, Dictionary<string, object>? parameters = null)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        using var command = new SqliteCommand(query, connection);
+
+        AddParameters(command, parameters);
+
+        connection.Open();
+        return Convert.ToInt32(command.ExecuteScalar()) > 0;
+    }
+
+    private void AddParameters(SqliteCommand command, Dictionary<string, object>? parameters = null)
+    {
+        if (parameters != null)
+            foreach (var param in parameters)
+                command.Parameters.AddWithValue(param.Key, param.Value);
+    }
+
 }

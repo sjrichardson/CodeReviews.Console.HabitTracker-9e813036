@@ -1,25 +1,20 @@
-﻿using System;
-using habit_tracker.src.DB;
-using habit_tracker.src;
-using Microsoft.Data.Sqlite;
-namespace habit_tracker
+﻿using habit_tracker.src.DB;
+namespace habit_tracker;
+class Program
 {
-    class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-           var database = new Database(@"habit-Tracker.db");
-        }
+        // var database = new Database(@"habit-Tracker.db");
+    }
 
-        static void GetUserInput()
+    static void GetUserInput()
+    {
+        Console.Clear();
+        bool closeApp = false;
+        while (closeApp == false)
         {
-            Console.Clear();
-            bool closeApp = false;
-            while (closeApp == false)
-            {
-                Console.WriteLine("MAIN MENU");
-                Console.WriteLine("\nWhat would you like to do");
-            }
+            Console.WriteLine("MAIN MENU");
+            Console.WriteLine("\nWhat would you like to do");
         }
     }
 }
