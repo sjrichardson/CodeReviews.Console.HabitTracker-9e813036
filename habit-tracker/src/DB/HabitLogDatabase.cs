@@ -16,17 +16,15 @@ namespace habit_tracker.src.DB
                     FOREIGN KEY(habitid) REFERENCES habit(habitid))");
         }
         public List<HabitLogEntry> GetAllHabitLogEntries()
-        {
-            var query = 
+        {     
+            return ExecuteQuery(
                 @"SELECT 
                     hl.habitlogid,
                     h.habitname, 
                     hl.date, 
                     hl.quantity 
                 FROM HabitLog hl
-                INNER JOIN Habit h on hl.habitid = h.habitid;";
-            
-            return ExecuteQuery(query, 
+                INNER JOIN Habit h on hl.habitid = h.habitid;", 
                 reader => new HabitLogEntry
                 {
                     HabitLogId = reader.GetInt32(reader.GetOrdinal("habitlogid")),
@@ -35,6 +33,23 @@ namespace habit_tracker.src.DB
                     Date = DateTime.Parse(reader.GetString(reader.GetOrdinal("date")))
                 });
 
+        }
+
+        public bool DeleteHabitLogEntry(int habitLogId)
+        {
+            var habitLogIdParam = new Dictionary<string, object>
+            {
+                { "$habitLogId", habitLogId }
+            };
+
+            if (!RecordExists("SELECT COUNT(1) FROM HabitLog WHERE habitlogid = $habitLogId", habitLogIdParam))
+                return false;
+
+            ExecuteNonQuery(
+                "DELETE FROM HabitLog WHERE habitlogid = $habitLogId",
+                habitLogIdParam);
+            
+            return true;
         }
     }
 }

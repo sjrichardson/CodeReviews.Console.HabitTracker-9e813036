@@ -14,29 +14,39 @@ namespace habit_tracker.src.DB
                 habitname TEXT)");
         }
 
-        public void InsertHabit(string habitName)
+        public bool InsertHabit(string habitName)
         {
-            if (RecordExists("SELECT COUNT(1) FROM Habit WHERE habitName = $habitName",
-                new Dictionary<string, object> 
-                { 
-                    { "$habitName", habitName } 
-                }))
-                return;
-            ExecuteNonQuery(
-                "INSERT INTO Habit (habitname) VALUES ($habitName)", 
-                new Dictionary<string, object>
-                {
-                    {"$habitName", habitName}
-                });
+            var habitNameParam = new Dictionary<string, object>
+            {
+                { "$habitName", habitName }
+            };
+
+            if (RecordExists("SELECT COUNT(1) FROM Habit WHERE habitName = $habitName", habitNameParam))
+                return false;
+            
+            ExecuteNonQuery("INSERT INTO Habit (habitname) VALUES ($habitName)", habitNameParam);
+            
+            return true;
         }
 
-        public void DeleteHabit(int habitId)
+        public bool DeleteHabit(int habitId)
         {
+            var habitIdParam = new Dictionary<string, object>
+            {
+                { "$habitId", habitId }
+            };
             
+            if (!RecordExists("SELECT COUNT(1) FROM Habit WHERE habitName = $habitName", habitIdParam))
+                return false;
+
+            ExecuteNonQuery("DELETE FROM HabitLog WHERE habitid = $habitId", habitIdParam);
+            ExecuteNonQuery("DELETE FROM Habit WHERE habitid = $habitId", habitIdParam);
+
+            return true;
         }
+
         public List<HabitEntry> GetAllHabitEntries()
         {
-
             return ExecuteQuery(
                 "SELECT habitid, habitname FROM Habit;", 
                 reader => new HabitEntry

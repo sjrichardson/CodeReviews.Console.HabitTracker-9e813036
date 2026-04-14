@@ -1,7 +1,7 @@
 using System.Globalization;
 
 namespace habit_tracker.src;
-public static class Dialogue
+public static class Dialogue2
 {
     public static string GetDateInput()
     {
