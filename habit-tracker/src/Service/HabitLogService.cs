@@ -12,5 +12,10 @@ namespace habit_tracker.src.Service
             _habitLogDatabase = habitLogDatabase;
             _dialogueService = dialogueService;
         }
+
+        public void GetUserInput()
+        {
+            
+        }
     }
 }

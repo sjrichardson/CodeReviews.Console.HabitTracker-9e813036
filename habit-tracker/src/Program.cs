@@ -1,20 +1,20 @@
 ﻿using habit_tracker.src.DB;
+using habit_tracker.src.Dialogue;
+using habit_tracker.src.Service;
 namespace habit_tracker;
 class Program
 {
     static void Main(string[] args)
     {
-        // var database = new Database(@"habit-Tracker.db");
-    }
+        var dbFile = @"habit-Tracker.db";
+        var dialogueService = new DialogueService();
+        var habitDatabase = new HabitDatabase(dbFile);
+        var habitLogDatabase = new HabitLogDatabase(dbFile);
+        var habitService = new HabitService(habitDatabase, dialogueService);
+        var habitLogService = new HabitLogService(habitLogDatabase, dialogueService);
 
-    static void GetUserInput()
-    {
-        Console.Clear();
-        bool closeApp = false;
-        while (closeApp == false)
-        {
-            Console.WriteLine("MAIN MENU");
-            Console.WriteLine("\nWhat would you like to do");
-        }
+        var app = new MainService(habitLogService, habitService, dialogueService);
+        app.Run();
+
     }
 }
